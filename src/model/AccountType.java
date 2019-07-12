@@ -1,4 +1,4 @@
-package TastyPizza;
+package model;
 
 public enum AccountType {
     CLIENT(1),

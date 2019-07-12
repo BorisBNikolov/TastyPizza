@@ -1,6 +1,6 @@
-import TastyPizza.Account;
-import TastyPizza.AccountType;
-import TastyPizza.ProductType;
+import model.Account;
+import model.AccountType;
+import model.ProductType;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -36,7 +36,7 @@ public class Main {
                     break;
                 case 2:
                     if (validateArguments(command, 5)) {
-                        account = pizzaManager.registerClient(command[1], command[2], command[3], command[4]);
+                        account = pizzaManager.register(command[1], command[2], command[3], command[4], AccountType.CLIENT);
                     }
                     break;
             }

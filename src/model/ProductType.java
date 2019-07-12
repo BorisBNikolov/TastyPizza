@@ -1,4 +1,4 @@
-package TastyPizza;
+package model;
 
 public enum ProductType {
     PIZZA,

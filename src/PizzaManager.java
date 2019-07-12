@@ -1,11 +1,13 @@
-import TastyPizza.*;
+import model.*;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PizzaManager {
     private List<Product> productList = new ArrayList<>();
@@ -21,17 +23,6 @@ public class PizzaManager {
         return null;
     }
 
-    public Account registerClient(String username, String password, String email, String name) {
-        Account account = new Account();
-        account.setUsername(username);
-        account.setPassword(password);
-        account.setEmail(email);
-        account.setName(name);
-        account.setAccountType(AccountType.CLIENT);
-        accountList.add(account);
-        System.out.println("The account has been registered");
-        return account;
-    }
 
     public Account register(String username, String password, String email, String name, AccountType accountType) {
         Account account = new Account();
@@ -78,10 +69,11 @@ public class PizzaManager {
     public void makeOrder(String[] idsAndQuantity, Account client) {
         Order order = new Order();
         order.setClient(client);
-        order.setProductList(getProductsWithId(idsAndQuantity));
-        order.setTotal(calculateTotal(order.getProductList()));
+        order.setProductCountMap(getProductsWithId(idsAndQuantity));
+        order.setTotal(calculateTotal(order.getProductCountMap()));
         order.setLocalDateTime(getToday());
         order.setDelivered(false);
+        order.setEstimatedTime(calculateEstimateTime(order));
         orderList.add(order);
         System.out.println("You have made the order");
     }
@@ -90,7 +82,7 @@ public class PizzaManager {
         Order order = getOrder(orderId);
         Order sameOrder = new Order();
         sameOrder.setClient(order.getClient());
-        sameOrder.setProductList(order.getProductList());
+        sameOrder.setProductCountMap(order.getProductCountMap());
         sameOrder.setTotal(order.getTotal());
         sameOrder.setDelivered(false);
         sameOrder.setLocalDateTime(getToday());
@@ -111,30 +103,66 @@ public class PizzaManager {
         System.out.println("The orders between " + after.toString() + " and " + before.toString());
         for (Order order : orderList) {
             if (order.getLocalDateTime().isAfter(after) && order.getLocalDateTime().isBefore(before)) {
-                System.out.println(order.getId() + ". " + "Client: " + order.getClient().getName() + " Total price: " + order.getTotal() + " lev");
+                System.out.println(order.getId() + ". " + "Client: " + order.getClient().getName() +
+                        " The date: " + order.getLocalDateTime().toString() + " Total price: " + order.getTotal() + " lev");
+            }
+        }
+    }
+
+    public void changeOrder(Account account, int id, String[] idsAndQuantity) {
+        for (Order order : orderList) {
+            if (order.getId() == id) {
+                if (account.getAccountType().equals(AccountType.CLIENT)) {
+                    if (account.getUsername().equals(order.getClient().getUsername())) {
+                        order.setProductCountMap(getProductsWithId(idsAndQuantity));
+                        System.out.println("The order has been changed");
+                        break;
+                    } else {
+                        System.out.println("You haven't made this order");
+                        break;
+                    }
+                } else {
+                    order.setProductCountMap(getProductsWithId(idsAndQuantity));
+                    System.out.println("The order has been changed");
+                    break;
+                }
+
+            }
+        }
+    }
+
+    public void deliverOrder(int id) {
+        for (Order order : orderList) {
+            if (order.getId() == id) {
+                order.setDelivered(true);
+                System.out.println("The order has been delivered");
+                break;
             }
         }
     }
 
     public void getEstimateTime(int orderId) {
         Order order = getOrder(orderId);
-        Duration duration = Duration.ofMinutes(10);
-        LocalTime localTime = null;
         if (order != null) {
-            localTime = order.getLocalDateTime().toLocalTime();
-
-            localTime.plus(duration);
-            for (OrderProduct orderProduct : order.getProductList()) {
-                localTime = localTime.plusHours(orderProduct.getProduct().getEstimateTime().getHour() * orderProduct.getQuantity());
-                localTime = localTime.plusMinutes(orderProduct.getProduct().getEstimateTime().getMinute() * orderProduct.getQuantity());
-                if (orderProduct.getQuantity() > 3) {
-                    localTime = localTime.minusMinutes(orderProduct.getProduct().getEstimateTime().getMinute());
-                }
-            }
-            System.out.println(localTime.toString());
+            System.out.println(order.getEstimatedTime().toString());
         } else {
             System.out.println("There isn't order with this id");
         }
+    }
+
+    public LocalTime calculateEstimateTime(Order order) {
+        Duration duration = Duration.ofMinutes(10);
+        LocalTime localTime;
+        localTime = order.getLocalDateTime().toLocalTime();
+        localTime.plus(duration);
+        for (Map.Entry<Product, Integer> entry : order.getProductCountMap().entrySet()) {
+            localTime = localTime.plusHours(entry.getKey().getEstimateTime().getHour() * entry.getValue());
+            localTime = localTime.plusMinutes(entry.getKey().getEstimateTime().getMinute() * entry.getValue());
+            if (entry.getValue() > 3) {
+                localTime = localTime.minusMinutes(entry.getKey().getEstimateTime().getMinute());
+            }
+        }
+        return localTime;
     }
 
     private Order getOrder(int orderId) {
@@ -146,10 +174,10 @@ public class PizzaManager {
         return null;
     }
 
-    private BigDecimal calculateTotal(List<OrderProduct> products) {
+    private BigDecimal calculateTotal(Map<Product, Integer> productCountMap) {
         BigDecimal total = new BigDecimal(0);
-        for (OrderProduct product : products) {
-            total = total.add(product.getProduct().getPrice().multiply(new BigDecimal(product.getQuantity())));
+        for (Map.Entry<Product, Integer> entry : productCountMap.entrySet()) {
+            total = total.add(entry.getKey().getPrice().multiply(new BigDecimal(entry.getValue())));
         }
         return total;
     }
@@ -158,16 +186,16 @@ public class PizzaManager {
         return LocalDateTime.now();
     }
 
-    private List<OrderProduct> getProductsWithId(String[] idsAndQuantity) {
-        List<OrderProduct> productList = new ArrayList<>();
+    private Map<Product, Integer> getProductsWithId(String[] idsAndQuantity) {
+        Map<Product, Integer> productCountMap = new HashMap<>();
         for (int i = 0; i < idsAndQuantity.length; i += 2) {
             for (Product product : this.productList) {
                 if (product.getId() == Integer.parseInt(idsAndQuantity[i])) {
-                    productList.add(new OrderProduct(product, Integer.parseInt(idsAndQuantity[i + 1])));
+                    productCountMap.put(product, Integer.parseInt(idsAndQuantity[i + 1]));
                 }
             }
         }
-        return productList;
+        return productCountMap;
     }
 
 }

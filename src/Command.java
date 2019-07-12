@@ -1,6 +1,6 @@
-import TastyPizza.Account;
-import TastyPizza.AccountType;
-import TastyPizza.ProductType;
+import model.Account;
+import model.AccountType;
+import model.ProductType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -112,7 +112,7 @@ public enum Command {
 
         }
     },
-    REFERENCE(9, "reference with format yyyy-MM-dd HH:mm", new int[]{2, 3}) {
+    REFERENCE(9, "Reference with format yyyy-MM-dd HH:mm", new int[]{2, 3}) {
         @Override
         public void invoke(PizzaManager pizzaManager, Account account, String[] arguments) {
             if (validateArgumentsOfInvoke(pizzaManager, arguments, 3)) {
@@ -127,8 +127,34 @@ public enum Command {
 
         }
     },
+    CHANGE_ORDER(10, "Change order", new int[]{1, 2, 3}) {
+        @Override
+        public void invoke(PizzaManager pizzaManager, Account account, String[] arguments) {
+            if (validateArgumentsOfInvoke(pizzaManager, arguments, arguments.length)) {
+                pizzaManager.changeOrder(account, Integer.parseInt(arguments[1]), Arrays.copyOfRange(arguments, 2, arguments.length));
+            } else {
+                System.err.println("Couldn't change");
+                System.exit(1);
+            }
 
-    EXIT(10, "Exit", new int[]{1, 2, 3}) {
+        }
+    },
+
+    DELIVER_ORDER(11, "Deliver order", new int[]{2, 3}) {
+        @Override
+        public void invoke(PizzaManager pizzaManager, Account account, String[] arguments) {
+            if (validateArgumentsOfInvoke(pizzaManager, arguments, 2)) {
+                pizzaManager.deliverOrder(Integer.parseInt(arguments[1]));
+            } else {
+                System.err.println("Couldn't deactivate");
+                System.exit(1);
+            }
+
+        }
+    },
+
+
+    EXIT(12, "Exit", new int[]{1, 2, 3}) {
         @Override
         public void invoke(PizzaManager pizzaManager, Account account, String[] arguments) {
             if (validateArgumentsOfInvoke(pizzaManager, arguments, 1)) {

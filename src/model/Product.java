@@ -1,4 +1,4 @@
-package TastyPizza;
+package model;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;

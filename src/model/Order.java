@@ -1,17 +1,17 @@
-package TastyPizza;
-
-import TastyPizza.Account;
+package model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Order {
     private static int maxID = 1;
     private int id;
-    private List<OrderProduct> productList = new ArrayList<>();
+    private Map<Product, Integer> productCountMap = new HashMap<>();
     private Account client;
     private Boolean delivered;
     private BigDecimal total;
@@ -31,12 +31,12 @@ public class Order {
         this.id = id;
     }
 
-    public List<OrderProduct> getProductList() {
-        return productList;
+    public Map<Product, Integer> getProductCountMap() {
+        return productCountMap;
     }
 
-    public void setProductList(List<OrderProduct> productList) {
-        this.productList = productList;
+    public void setProductCountMap(Map<Product, Integer> productCountMap) {
+        this.productCountMap = productCountMap;
     }
 
     public Account getClient() {
